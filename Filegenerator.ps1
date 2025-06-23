@@ -1,4 +1,4 @@
-Measure-Command{
+$Trace = Trace-Script{
 $bigFileName = "plc_log.txt"
 $plcNames = 'PLC_A','PLC_B','PLC_C','PLC_D'
 $errorTypes = @(
@@ -8,31 +8,29 @@ $errorTypes = @(
     'Temperature warning'
 )
 $statusCodes = 'OK','WARN','ERR'
+
+$Random = [Random]::new()
+
+$logLines = foreach($i in 0..49999) {
+    $timestamp = ([datetime]::Now).AddSeconds($i).ToString("yyyy-MM-dd HH:mm:ss")
+    $plc = $plcNames[$Random.Next(0,$plcNames.Count-1)]
+    $operator = $Random.Next(101,121)
+    $batch = $Random.Next(1000,1101)
+    $status = $statusCodes[$Random.Next(0,$statusCodes.Count-1)]
+    $machineTemp = [math]::Round(($Random.Next(60,110)) + ($Random.Next()),2)
+    $load = $Random.Next(0,101)
  
-$logLines = @()
- 
-for ($i=0; $i -lt 50000; $i++) {
-    $timestamp = (Get-Date).AddSeconds(-$i).ToString("yyyy-MM-dd HH:mm:ss")
-    $plc = $plcNames | Get-Random
-    $operator = Get-Random -Minimum 101 -Maximum 121
-    $batch = Get-Random -Minimum 1000 -Maximum 1101
-    $status = $statusCodes | Get-Random
-    $machineTemp = [math]::Round((Get-Random -Minimum 60 -Maximum 110) + (Get-Random),2)
-    $load = Get-Random -Minimum 0 -Maximum 101
- 
-    if ((Get-Random -Minimum 1 -Maximum 8) -eq 4) {
-        $errorType = $errorTypes | Get-Random
+    if ($Random.Next(1,8) -eq 4) {
+        $errorType = $errorTypes[$Random.Next(0,$errorTypes.Count-1)]
         if ($errorType -eq 'Sandextrator overload') {
-            $value = (Get-Random -Minimum 1 -Maximum 11)
-            $msg = "ERROR; $timestamp; $plc; $errorType; $value; $status; $operator; $batch; $machineTemp; $load"
+            "ERROR; $timestamp; $plc; $errorType; $($Random.Next(1,11)); $status; $operator; $batch; $machineTemp; $load"
         } else {
-            $msg = "ERROR; $timestamp; $plc; $errorType; ; $status; $operator; $batch; $machineTemp; $load"
+            "ERROR; $timestamp; $plc; $errorType; ; $status; $operator; $batch; $machineTemp; $load"
         }
     } else {
-        $msg = "INFO; $timestamp; $plc; System running normally; ; $status; $operator; $batch; $machineTemp; $load"
+        "INFO; $timestamp; $plc; System running normally; ; $status; $operator; $batch; $machineTemp; $load"
     }
- 
-    $logLines += $msg
+
 }
  
 Set-Content -Path $bigFileName -Value $logLines
